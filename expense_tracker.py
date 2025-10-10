@@ -1,6 +1,9 @@
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
+from collections import defaultdict
+import json
+import pandas as pd
 
 class Expense:
     def __init__(self, amount, category, date, payment):
@@ -86,6 +89,48 @@ class ExpenseTracker:
         plt.title("Spending by Category")
         plt.axis('equal')
         plt.show()
+
+    # New functions:
+    def export_to_excel(self, filename='expenses.xlsx'):
+        data = [{'Amount': e.amount, 'Category': e.category, 'Date': e.date, 'Payment': e.payment} for e in self.expenses]
+        df = pd.DataFrame(data)
+        df.to_excel(filename, index=False)
+        print(f"Exported expenses to {filename}")
+
+    def expenses_in_date_range(self, start_date, end_date):
+        results = [e for e in self.expenses if start_date <= e.date <= end_date]
+        return results
+
+    def top_categories(self, n=3):
+        cat_summary = {}
+        for exp in self.expenses:
+            cat_summary[exp.category] = cat_summary.get(exp.category, 0) + exp.amount
+        sorted_cats = sorted(cat_summary.items(), key=lambda x: x[1], reverse=True)
+        return sorted_cats[:n]
+
+    def visualize_monthly_trend(self):
+        month_expense = defaultdict(float)
+        for e in self.expenses:
+            month = e.date[:7]  # 'YYYY-MM'
+            month_expense[month] += e.amount
+        months = sorted(month_expense.keys())
+        amounts = [month_expense[m] for m in months]
+        plt.plot(months, amounts, marker='o')
+        plt.title("Monthly Expense Trend")
+        plt.xlabel("Month")
+        plt.ylabel("Amount Spent")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    def filter_by_amount(self, min_amount=0, max_amount=float('inf')):
+        return [e for e in self.expenses if min_amount <= e.amount <= max_amount]
+
+    def save_as_json(self, filename='expenses.json'):
+        data = [{'Amount': e.amount, 'Category': e.category, 'Date': e.date, 'Payment': e.payment} for e in self.expenses]
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2)
+        print(f"Saved expenses to {filename}")
 
 if __name__ == "__main__":
     tracker = ExpenseTracker()
